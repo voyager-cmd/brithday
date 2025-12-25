@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>王志华，生日快乐！🎂</title>
     <style>
-        /* 保留所有原有样式，无需修改 */
+        /* 保留所有原有样式，无修改 */
         * {
             margin: 0;
             padding: 0;
@@ -460,7 +460,7 @@
             wishContent.value = '';
         });
 
-        // 4. 确认许愿（核心：静默发送邮件，用户无感知）
+        // 4. 确认许愿（优化：捕获后端响应错误，便于调试）
         confirmWishBtn.addEventListener('click', async function() {
             const name = senderName.value.trim();
             const content = wishContent.value.trim();
@@ -470,13 +470,12 @@
                 return;
             }
 
-            // 【关键1】按钮文字改为通用的“许愿中”，不提“发送”
             this.disabled = true;
             this.textContent = '许愿中...';
 
             try {
-                // 【关键2】静默发送邮件请求，用户看不到任何和邮件相关的信息
-                await fetch('send_wish.php', {
+                // 发送请求（确保send_wish.php和index.html同目录）
+                const response = await fetch('send_wish.php', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/x-www-form-urlencoded',
@@ -484,7 +483,11 @@
                     body: `senderName=${encodeURIComponent(name)}&wishContent=${encodeURIComponent(content)}`
                 });
 
-                // 【关键3】无论邮件是否发送成功，都只给“许愿成功”的通用提示
+                // 新增：解析后端响应，便于调试（用户无感知）
+                const result = await response.json();
+                console.log('后端响应：', result); // 仅开发者可见
+
+                // 无论结果如何，都显示许愿成功
                 saveWish(name, content);
                 createFullscreenFireworks();
                 wishSound.play();
@@ -495,16 +498,14 @@
                     isWishMode = false;
                     senderName.value = '';
                     wishContent.value = '';
-                    // 【关键4】提示语完全不提邮件，只说许愿成功
                     alert(`🎉 ${name}的愿望已成功许下！\n愿这份美好能陪伴王志华度过快乐的一天～`);
-                    
-                    // 恢复按钮状态
                     this.disabled = false;
                     this.textContent = '确认许愿';
                 }, 1500);
 
             } catch (error) {
-                // 【关键5】即使请求失败，也伪装成“许愿成功”，不暴露错误
+                // 网络/解析错误时的兜底
+                console.error('请求失败：', error); // 仅开发者可见
                 saveWish(name, content);
                 createFullscreenFireworks();
                 wishSound.play();
@@ -516,11 +517,9 @@
                     senderName.value = '';
                     wishContent.value = '';
                     alert(`🎉 ${name}的愿望已成功许下！\n愿这份美好能陪伴王志华度过快乐的一天～`);
-                    
                     this.disabled = false;
                     this.textContent = '确认许愿';
                 }, 1500);
-                console.error('邮件发送失败（仅开发者可见）：', error); // 仅控制台打印，用户看不到
             }
         });
 
