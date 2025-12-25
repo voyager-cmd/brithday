@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>王志华生日祝福</title>
+    <title>生日祝福</title>
     <!-- 引入 Google Fonts 和 中文字体 -->
     <link href="https://fonts.googleapis.com/css2?family=Pacifico&family=Nunito:wght@400;700&display=swap" rel="stylesheet">
     <!-- 使用在线字体可能会慢，这里作为回退方案或美化选项 -->
@@ -1125,6 +1125,10 @@
         <div class="music-control" id="musicBtn">
             <span class="music-icon">🎵</span>
         </div>
+        <!-- 退出按钮 -->
+        <div class="logout-btn-visitor" onclick="logout()">
+            <span>🚪 退出</span>
+        </div>
 
         <!-- RPG 精灵助手 -->
         <div class="fairy-helper" id="fairyHelper">🧚‍♀️</div>
@@ -1244,7 +1248,8 @@
     <!-- 3. 管理界面 -->
     <div class="admin-container" id="adminContainer">
         <div class="admin-header">
-            <h2>🎁 所有生日祝福</h2>
+            <h2>⚙️ 后台管理</h2>
+            <button class="admin-btn" onclick="logout()" style="background:#666;">🚪 退出登录</button>
         </div>
         
         <!-- 标题管理区域 -->
@@ -1296,6 +1301,9 @@
                 <div id="adminQuestionsList"></div>
                 <button class="admin-btn" onclick="addQuestionUI()">➕ 添加题目</button>
                 <button class="admin-btn clear-btn" onclick="resetUserGameData('quiz')">重置所有用户答题次数</button>
+                <button class="admin-btn clear-btn" onclick="clearQuizRecords()">清空答题记录</button>
+                <button class="admin-btn" onclick="viewQuizDetails()">📊 查看答题详情</button>
+                <div id="quizDetailsPanel" style="display:none; margin-top:10px; padding:10px; background:#f9f9f9; border-radius:5px;"></div>
             </div>
 
             <!-- 拼图设置 -->
@@ -1309,6 +1317,7 @@
                 <div style="margin-top:10px;">
                     <button class="admin-btn clear-btn" onclick="resetUserGameData('puzzle')">重置拼图进度</button>
                     <span style="font-size:0.9em; color:#666; margin-left:10px;">红包获得者：<span id="redPacketWinners">暂无</span></span>
+                    <button class="admin-btn clear-btn" style="padding:2px 5px; font-size:0.8em;" onclick="clearRedPacketWinners()">清空</button>
                 </div>
             </div>
 
@@ -1378,6 +1387,7 @@
         const adminContainer = document.getElementById('adminContainer');
         const passwordInput = document.getElementById('passwordInput');
         const loginBtn = document.getElementById('loginBtn');
+        let sessionCheckInterval;
 
         // 初始化密码列表（如果没有则设置默认值）
         if (!localStorage.getItem('guestPasswords')) {
@@ -1395,10 +1405,25 @@
             const guestPasswords = JSON.parse(localStorage.getItem('guestPasswords') || '[]');
             
             if (guestPasswords.includes(password)) {
+                // 检查是否正在使用
+                const sessionKey = 'session_active_' + password;
+                const lastActive = parseInt(localStorage.getItem(sessionKey) || '0');
+                const now = Date.now();
+                // 如果5分钟内有活动，则认为正在使用
+                if (now - lastActive < 5 * 60 * 1000) {
+                    alert('该密码当前正在被其他人使用，请稍后再试！');
+                    return;
+                }
+
                 // 访客模式
                 currentLoginPassword = password;
                 loginContainer.style.display = 'none';
                 visitorContainer.style.display = 'block';
+                
+                // 设置活跃状态
+                localStorage.setItem(sessionKey, now.toString());
+                startSessionHeartbeat(password);
+
                 renderVisitorTitle(currentLoginPassword); // 渲染对应标题
                 initVisitorFunctions(); // 初始化访客界面功能
             } else if (password === '2006') {
@@ -1416,6 +1441,34 @@
                 passwordInput.focus();
             }
         }
+
+        function startSessionHeartbeat(password) {
+            clearInterval(sessionCheckInterval);
+            sessionCheckInterval = setInterval(() => {
+                localStorage.setItem('session_active_' + password, Date.now().toString());
+            }, 60 * 1000); // 每分钟更新一次
+        }
+
+        window.logout = function() {
+            if (currentLoginPassword && currentLoginPassword !== 'admin') {
+                localStorage.removeItem('session_active_' + currentLoginPassword);
+            }
+            clearInterval(sessionCheckInterval);
+            currentLoginPassword = '';
+            
+            // 重置界面
+            visitorContainer.style.display = 'none';
+            adminContainer.style.display = 'none';
+            loginContainer.style.display = 'flex'; // flex 居中
+            passwordInput.value = '';
+            
+            // 停止音乐等（可选）
+            const music = document.getElementById('birthdayMusic');
+            if(music) music.pause();
+            
+            // 刷新页面以重置所有状态可能是最简单的
+            window.location.reload();
+        };
 
         // ===================== 访客界面逻辑（原生日页面功能） =====================
         function initVisitorFunctions() {
@@ -1511,9 +1564,10 @@
                     }
 
                     document.querySelector('.blow-tip').textContent = '蜡烛已吹灭，愿望会实现哦 ✨';
-                    showDialog("哇！蜡烛吹灭啦！愿望一定都会实现！✨<br>快看，星空出来了！🌌");
+                    showDialog("哇！蜡烛吹灭啦！愿望一定都会实现！✨");
                     
-                    // 切换到星空场景
+                    // 切换到星空场景 (用户要求移除，保持原画面)
+                    /*
                     setTimeout(() => {
                         // 背景变黑
                         document.body.classList.add('starry-mode');
@@ -1528,6 +1582,12 @@
                         // 播放更轻柔的背景音乐或继续
                         // 这里可以保持原音乐
                     }, 2000);
+                    */
+                   
+                   // 提示游戏
+                   setTimeout(() => {
+                       showDialog("快来玩玩小游戏，赢取生日大礼包吧！🎁");
+                   }, 1000);
 
                 } else {
                     showDialog("蛋糕看起来很好吃呢~ 🍰");
@@ -1969,6 +2029,7 @@
                 let score = 0;
                 let allAnswered = true;
                 const questions = JSON.parse(localStorage.getItem('quizQuestions') || '[]');
+                const quizDetails = [];
 
                 questions.forEach(q => {
                     let userAns = '';
@@ -1981,7 +2042,38 @@
                     }
 
                     if (!userAns) allAnswered = false;
-                    if (userAns === q.answer) score += parseInt(q.score);
+                    
+                    let isCorrect = false;
+                    if (q.type === 'choice') {
+                        const u = userAns.trim();
+                        const a = q.answer.trim();
+                        
+                        if (u === a) {
+                            isCorrect = true;
+                        } else {
+                            // 兼容处理：选项 "B 11月6日" vs 答案 "B"
+                            const uMatch = u.match(/^([A-Za-z])([.\s]|$)/);
+                            const uLetter = uMatch ? uMatch[1].toUpperCase() : '';
+                            
+                            const aMatch = a.match(/^([A-Za-z])([.\s]|$)/);
+                            const aLetter = aMatch ? aMatch[1].toUpperCase() : a.toUpperCase();
+                            
+                            // 只要首字母匹配且答案长度较短（说明是选项代码），就算对
+                            if (uLetter && uLetter === aLetter) isCorrect = true;
+                        }
+                    } else {
+                        isCorrect = (userAns.trim() === q.answer.trim());
+                    }
+                    
+                    const earned = isCorrect ? parseInt(q.score) : 0;
+                    if (isCorrect) score += earned;
+
+                    quizDetails.push({
+                        questionId: q.id,
+                        userAnswer: userAns,
+                        isCorrect: isCorrect,
+                        earnedScore: earned
+                    });
                 });
 
                 if (!allAnswered) {
@@ -1992,6 +2084,7 @@
 
                 userData.quizTaken = true;
                 userData.score = score;
+                userData.quizDetails = quizDetails; // 保存详情
                 saveUserGameData(userData);
                 
                 alert(`提交成功！你的得分是：${score}分`);
@@ -2222,8 +2315,17 @@
                 const div = document.createElement('div');
                 div.className = 'wish-item';
                 div.innerHTML = `
-                    <strong>${idx+1}. [${q.type==='choice'?'选择':'填空'}] ${q.question} (${q.score}分)</strong>
-                    <button class="delete-pwd-btn" onclick="deleteQuestion(${q.id})">&times;</button>
+                    <div style="margin-bottom:5px;">
+                        <strong>${idx+1}. [${q.type==='choice'?'选择':'填空'}] ${q.question} (${q.score}分)</strong>
+                    </div>
+                    <div style="font-size:0.9em; color:#666; margin-bottom:5px;">
+                        答案: ${q.answer} 
+                        ${q.type==='choice' ? `(选项: ${q.options.join(',')})` : ''}
+                    </div>
+                    <div>
+                        <button class="admin-btn" style="padding:2px 10px; font-size:0.8em;" onclick="editQuestion(${q.id})">编辑</button>
+                        <button class="delete-pwd-btn" onclick="deleteQuestion(${q.id})">&times;</button>
+                    </div>
                 `;
                 qList.appendChild(div);
             });
@@ -2248,6 +2350,108 @@
                 wSpan.textContent = '暂无';
             }
         }
+        
+        // 查看答题详情
+        window.viewQuizDetails = function() {
+            const panel = document.getElementById('quizDetailsPanel');
+            if (panel.style.display === 'block') {
+                panel.style.display = 'none';
+                return;
+            }
+            
+            const allData = JSON.parse(localStorage.getItem('userGameData') || '{}');
+            const questions = JSON.parse(localStorage.getItem('quizQuestions') || '[]');
+            let html = '<h4>📊 答题记录详情</h4>';
+            let hasData = false;
+            
+            for (let pwd in allData) {
+                const user = allData[pwd];
+                if (user.quizTaken) {
+                    hasData = true;
+                    html += `<div style="border-bottom:1px solid #ddd; padding:10px 0;">
+                        <div style="font-weight:bold; color:#e91e63;">用户密码: ${pwd} <span style="color:#333;">(总分: ${user.score})</span></div>
+                        <div style="font-size:0.9em; margin-top:5px;">`;
+                    
+                    if (user.quizDetails && user.quizDetails.length > 0) {
+                        user.quizDetails.forEach(d => {
+                            const q = questions.find(item => item.id == d.questionId);
+                            const qText = q ? q.question : '未知题目';
+                            const isCorrect = d.isCorrect ? '<span style="color:green">✔</span>' : '<span style="color:red">✘</span>';
+                            html += `<div>${isCorrect} ${qText} [答: ${d.userAnswer}] (+${d.earnedScore}分)</div>`;
+                        });
+                    } else {
+                        html += `<div>暂无详细答题数据（旧数据）</div>`;
+                    }
+                    
+                    html += `</div></div>`;
+                }
+            }
+            
+            if (!hasData) html += '<div>暂无答题记录</div>';
+            
+            panel.innerHTML = html;
+            panel.style.display = 'block';
+        };
+        
+        window.clearQuizRecords = function() {
+            if (!confirm('确定要清空所有答题记录吗？这将重置所有用户的分数和答题状态！')) return;
+            const allData = JSON.parse(localStorage.getItem('userGameData') || '{}');
+            for (let pwd in allData) {
+                allData[pwd].quizTaken = false;
+                allData[pwd].score = 0;
+                allData[pwd].quizDetails = [];
+            }
+            localStorage.setItem('userGameData', JSON.stringify(allData));
+            alert('答题记录已清空！');
+            renderGameAdmin();
+            document.getElementById('quizDetailsPanel').style.display = 'none';
+        };
+
+        window.clearRedPacketWinners = function() {
+            if(!confirm('确定清空红包获得者记录吗？')) return;
+            localStorage.setItem('redPacketWinners', '[]');
+            renderGameAdmin();
+        };
+
+        // 编辑题目
+        window.editQuestion = function(id) {
+            const questions = JSON.parse(localStorage.getItem('quizQuestions') || '[]');
+            const q = questions.find(item => item.id === id);
+            if (!q) return;
+            
+            const type = prompt("修改题目类型（1:选择题, 2:填空题）", q.type === 'choice' ? '1' : '2');
+            if (!type) return;
+            
+            const question = prompt("修改题目内容：", q.question);
+            if (!question) return;
+            
+            const score = prompt("修改分值：", q.score);
+            if (!score) return;
+
+            q.type = type === '1' ? 'choice' : 'fill';
+            q.question = question;
+            q.score = parseInt(score);
+
+            if (type === '1') {
+                const defaultOpts = q.options ? q.options.join(',') : '';
+                const optionsStr = prompt("修改选项，用逗号分隔：", defaultOpts);
+                if (!optionsStr) return;
+                q.options = optionsStr.split(/[,，]/);
+                
+                const ans = prompt("修改正确答案（如选项是'A 内容'，可只填'A'）：", q.answer);
+                if (!ans) return;
+                q.answer = ans;
+            } else {
+                const ans = prompt("修改正确答案：", q.answer);
+                if (!ans) return;
+                q.answer = ans;
+                delete q.options;
+            }
+
+            localStorage.setItem('quizQuestions', JSON.stringify(questions));
+            renderGameAdmin();
+            alert("题目修改成功！");
+        };
 
         // 添加题目
         window.addQuestionUI = function() {
@@ -2272,7 +2476,7 @@
                 if (!optionsStr) return;
                 newQ.options = optionsStr.split(/[,，]/);
                 
-                const ans = prompt("请输入正确答案（必须与选项完全一致）：");
+                const ans = prompt("请输入正确答案（如选项是'A 内容'，可只填'A'）：");
                 if (!ans) return;
                 newQ.answer = ans;
             } else {
