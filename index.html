@@ -1332,6 +1332,46 @@
         // ===================== 全局变量 =====================
         let currentLoginPassword = ''; // 记录当前登录使用的密码
 
+        // ===================== 标题数据逻辑 =====================
+        function initTitleData() {
+            try {
+                const configStr = localStorage.getItem('birthdayTitleConfig');
+                if (!configStr) {
+                    throw new Error('No config');
+                }
+                const config = JSON.parse(configStr);
+                // 确保结构完整
+                if (!config.default) config.default = "王志华，生日快乐！";
+                if (!config.custom) config.custom = {};
+                localStorage.setItem('birthdayTitleConfig', JSON.stringify(config));
+            } catch (e) {
+                const defaultConfig = {
+                    default: "王志华，生日快乐！",
+                    custom: {}
+                };
+                localStorage.setItem('birthdayTitleConfig', JSON.stringify(defaultConfig));
+            }
+        }
+        initTitleData(); // 立即初始化
+
+        function renderVisitorTitle(password) {
+            try {
+                initTitleData(); // 确保数据存在
+                const config = JSON.parse(localStorage.getItem('birthdayTitleConfig'));
+                const titleEl = document.getElementById('birthdayTitle');
+                
+                if (titleEl) {
+                    if (config.custom && config.custom[password]) {
+                        titleEl.textContent = config.custom[password];
+                    } else {
+                        titleEl.textContent = config.default;
+                    }
+                }
+            } catch (e) {
+                console.error("Title render error:", e);
+            }
+        }
+
         // ===================== 登录逻辑 =====================
         const loginContainer = document.getElementById('loginContainer');
         const visitorContainer = document.getElementById('visitorContainer');
@@ -1359,6 +1399,7 @@
                 currentLoginPassword = password;
                 loginContainer.style.display = 'none';
                 visitorContainer.style.display = 'block';
+                renderVisitorTitle(currentLoginPassword); // 渲染对应标题
                 initVisitorFunctions(); // 初始化访客界面功能
             } else if (password === '2006') {
                 // 管理模式
@@ -1368,6 +1409,7 @@
                 renderWishesList(); // 渲染祝福列表
                 renderPasswordManager(); // 渲染密码管理
                 renderGameAdmin(); // 渲染游戏管理
+                renderTitleAdmin(); // 渲染标题管理
             } else {
                 alert('密码错误！\n默认访客密码：123 ');
                 passwordInput.value = '';
@@ -1377,6 +1419,9 @@
 
         // ===================== 访客界面逻辑（原生日页面功能） =====================
         function initVisitorFunctions() {
+            // 再次确保标题正确渲染
+            renderVisitorTitle(currentLoginPassword);
+
             let isCandleBlown = false;
             let isWishMode = false;
             let isMusicPlaying = false;
@@ -2298,6 +2343,7 @@
 
         // ===================== 标题管理逻辑 =====================
         function renderTitleAdmin() {
+            initTitleData();
             const config = JSON.parse(localStorage.getItem('birthdayTitleConfig'));
             
             // 默认标题
@@ -2325,6 +2371,7 @@
             const val = document.getElementById('defaultTitleInput').value.trim();
             if (!val) return alert("标题不能为空！");
             
+            initTitleData();
             const config = JSON.parse(localStorage.getItem('birthdayTitleConfig'));
             config.default = val;
             localStorage.setItem('birthdayTitleConfig', JSON.stringify(config));
@@ -2339,6 +2386,7 @@
             
             // 检查密码是否存在于访客密码列表（可选，暂不强制，允许预设）
             
+            initTitleData();
             const config = JSON.parse(localStorage.getItem('birthdayTitleConfig'));
             if (!config.custom) config.custom = {};
             
@@ -2353,6 +2401,7 @@
         window.deleteCustomTitle = function(pwd) {
             if(!confirm(`确定删除密码 [${pwd}] 的专属标题吗？`)) return;
             
+            initTitleData();
             const config = JSON.parse(localStorage.getItem('birthdayTitleConfig'));
             if (config.custom && config.custom[pwd]) {
                 delete config.custom[pwd];
