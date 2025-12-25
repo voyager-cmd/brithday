@@ -1409,8 +1409,8 @@
                 const sessionKey = 'session_active_' + password;
                 const lastActive = parseInt(localStorage.getItem(sessionKey) || '0');
                 const now = Date.now();
-                // 如果5分钟内有活动，则认为正在使用
-                if (now - lastActive < 5 * 60 * 1000) {
+                // 如果10秒内有活动，则认为正在使用 (快速判定，避免死锁)
+                if (now - lastActive < 10 * 1000) {
                     alert('该密码当前正在被其他人使用，请稍后再试！');
                     return;
                 }
@@ -1423,6 +1423,11 @@
                 // 设置活跃状态
                 localStorage.setItem(sessionKey, now.toString());
                 startSessionHeartbeat(password);
+
+                // 页面关闭/刷新前清除状态
+                window.addEventListener('beforeunload', () => {
+                     localStorage.removeItem(sessionKey);
+                });
 
                 renderVisitorTitle(currentLoginPassword); // 渲染对应标题
                 initVisitorFunctions(); // 初始化访客界面功能
@@ -1446,7 +1451,7 @@
             clearInterval(sessionCheckInterval);
             sessionCheckInterval = setInterval(() => {
                 localStorage.setItem('session_active_' + password, Date.now().toString());
-            }, 60 * 1000); // 每分钟更新一次
+            }, 3000); // 每3秒更新一次，配合10秒超时
         }
 
         window.logout = function() {
