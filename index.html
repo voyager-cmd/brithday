@@ -1913,10 +1913,13 @@
             // 初始化题目
             if (!localStorage.getItem('quizQuestions')) {
                 const defaultQuestions = [
-                    { id: 1, type: 'choice', question: '王志华最喜欢的颜色是？', options: ['红色', '蓝色', '黑色', '粉色'], answer: '黑色', score: 20 },
-                    { id: 2, type: 'choice', question: '王志华的星座是？', options: ['狮子座', '处女座', '天秤座', '天蝎座'], answer: '天秤座', score: 20 },
-                    { id: 3, type: 'fill', question: '王志华最喜欢吃的食物是？', answer: '火锅', score: 30 }, // 示例答案
-                    { id: 4, type: 'choice', question: '今年是王志华多少岁生日？', options: ['18', '19', '20', '21'], answer: '19', score: 30 }
+                    { id: 1, type: 'choice', question: '季夏辉的生日是多少？', options: ['10月6日', '10月16日', '11月6日', '11月16日'], answer: '11月6日', score: 10 },
+                    { id: 2, type: 'choice', question: '王志华是什么？', options: ['应急食品', '季夏辉的同学', '应急食品', '应急食品'], answer: '季夏辉的同学', score: 10 },
+                    { id: 3, type: 'choice', question: '季夏辉最喜欢吃的食物是？' , options: ['王志华', '奶茶', '辣椒', '甜食'], answer: '辣椒', score: 10 }, // 示例答案
+                    { id: 4, type: 'choice', question: '季夏辉最喜欢哪个科目？' , options: ['高数', 'C语言', '机器人', '以上都不是'], answer: '以上都不是', score: 20 }, 
+                    { id: 5, type: 'choice', question: '季夏辉别名是什么？' , options: ['voyager1', '无言', '无道', '以上都是'], answer: '以上都是', score: 20 },
+                    { id: 6, type: 'choice', question: '季夏辉讨厌什么？' , options: ['蜘蛛', '蚂蚁', '毛毛虫', '以上都是'], answer: '蜘蛛', score: 20 },
+                    { id: 7, type: 'choice', question: '季夏辉打300最擅长哪个位置？' , options: ['上路', '中路', '打野', '都不擅长'], answer: '都不擅长', score: 20 }, 
                 ];
                 localStorage.setItem('quizQuestions', JSON.stringify(defaultQuestions));
             }
@@ -2622,5 +2625,6 @@
     </script>
 </body>
 </html>
+
 
 
